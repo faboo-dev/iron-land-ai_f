@@ -26,13 +26,28 @@ vectorstore = Chroma(
 
 retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
 
-# Initialize LLM (Google Gemini Pro)
+import google.generativeai as genai
+
+# Configure GenAI
+genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+
+# Initialize LLM (Google Gemini)
 llm = ChatGoogleGenerativeAI(
-    model="gemini-pro",
+    model="gemini-1.5-flash",
     temperature=0.7,
     max_tokens=1024,
     max_retries=2,
 )
+
+@app.on_event("startup")
+async def startup_event():
+    print("Listing available models...")
+    try:
+        for m in genai.list_models():
+            if 'generateContent' in m.supported_generation_methods:
+                print(f"Found model: {m.name}")
+    except Exception as e:
+        print(f"Error listing models: {e}")
 
 # RAG Prompt
 template = """Answer the question based only on the following context:

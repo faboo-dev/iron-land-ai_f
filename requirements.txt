@@ -3,10 +3,10 @@ uvicorn
 python-dotenv
 langchain
 langchain-community
-langchain-google-genai>=1.0.3
+langchain-google-genai
+google-generativeai
 langchain-chroma
-chromadb
-pydantic
+langchain-communitydantic
 requests
 importlib-metadata>=6.0.0
 zipp>=3.0.0
