@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>철산랜드 - AI 여행 가이드</title>
+
+    <!-- Google Fonts & Icons -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Noto+Sans+KR:wght@300;400;500;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #ec4899;
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+            --accent: #8b5cf6;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', 'Noto Sans KR', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-image:
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(236, 72, 153, 0.15) 0px, transparent 50%);
+        }
+
+        /* 메인 컨테이너 */
+        .container {
+            width: 100%;
+            max-width: 800px;
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        /* 헤더 영역 */
+        header {
+            margin-bottom: 60px;
+            animation: fadeInDown 1s ease-out;
+        }
+
+        .logo {
+            font-size: 3.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+            letter-spacing: -1px;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: var(--text-sub);
+            font-weight: 300;
+        }
+
+        /* 검색 영역 */
+        .search-box {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            margin-bottom: 40px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            animation: fadeInUp 1s ease-out 0.3s backwards;
+        }
+
+        .search-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 35px 60px -15px rgba(0, 0, 0, 0.6);
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+
+        textarea {
+            width: 100%;
+            height: 120px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 2px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 20px;
+            color: white;
+            font-size: 1.1rem;
+            resize: none;
+            outline: none;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        textarea:focus {
+            border-color: var(--primary);
+            background: rgba(15, 23, 42, 0.8);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        }
+
+        textarea::placeholder {
+            color: rgba(148, 163, 184, 0.5);
+        }
+
+        .search-btn {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            color: white;
+            border: none;
+            padding: 16px 40px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.4);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .search-btn:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 20px 35px -5px rgba(99, 102, 241, 0.5);
+        }
+
+        .search-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* 결과 영역 */
+        #ai-results {
+            display: none;
+            animation: fadeInUp 0.5s ease-out;
+            text-align: left;
+        }
+
+        .result-card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            line-height: 1.8;
+            font-size: 1.05rem;
+            color: #e2e8f0;
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--accent);
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+
+        .source-box {
+            margin-top: 30px;
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .source-title {
+            font-size: 0.9rem;
+            color: var(--text-sub);
+            margin-bottom: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .source-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #60a5fa;
+            text-decoration: none;
+            padding: 10px;
+            border-radius: 8px;
+            transition: background 0.2s;
+            font-size: 0.95rem;
+        }
+
+        .source-link:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .timestamp {
+            color: var(--text-sub);
+            font-size: 0.85rem;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        /* 로딩 애니메이션 */
+        .loading-container {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-left-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 모바일 대응 */
+        @media (max-width: 600px) {
+            .logo {
+                font-size: 2.5rem;
+            }
+
+            .container {
+                padding: 20px;
+            }
+
+            .search-box {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <header>
+            <div class="logo">IRON LAND</div>
+            <div class="subtitle">Creator's Travel Intelligence</div>
+        </header>
+
+        <div class="search-box">
+            <textarea id="ai-query" placeholder="무엇이든 물어보세요.&#10;예: 세부에서 아이랑 가기 좋은 리조트 추천해줘"></textarea>
+            <button id="ai-search-btn" class="search-btn">
+                <i class="fas fa-sparkles"></i>
+                AI에게 물어보기
+            </button>
+        </div>
+
+        <div id="ai-results">
+            <div class="result-card">
+                <div class="result-header">
+                    <i class="fas fa-robot"></i>
+                    <span>철산랜드 AI 답변</span>
+                </div>
+                <div id="ai-content"></div>
+                <div id="ai-sources" class="source-box" style="display: none;">
+                    <div class="source-title">참고한 영상/자료</div>
+                    <div id="source-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const btn = document.getElementById('ai-search-btn');
+            const input = document.getElementById('ai-query');
+            const results = document.getElementById('ai-results');
+            const contentDiv = document.getElementById('ai-content');
+            const sourcesDiv = document.getElementById('ai-sources');
+            const sourceList = document.getElementById('source-list');
+
+            btn.addEventListener('click', async () => {
+                const query = input.value.trim();
+                if (!query) return alert('질문을 입력해주세요!');
+
+                // UI 상태 변경
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> 분석 중...';
+                results.style.display = 'block';
+                contentDiv.innerHTML = `
+                    <div class="loading-container">
+                        <div class="spinner"></div>
+                        <p>철산랜드의 모든 기록을 찾아보고 있습니다...</p>
+                    </div>
+                `;
+                sourcesDiv.style.display = 'none';
+
+                try {
+                    const response = await fetch('/wp-json/travel/v1/smart-search', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ query: query })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        // 답변 표시 (줄바꿈 처리)
+                        contentDiv.innerHTML = data.main_content.content.replace(/\n/g, '<br>');
+
+                        // 출처 표시
+                        if (data.main_content.sources && data.main_content.sources.length > 0) {
+                            sourceList.innerHTML = data.main_content.sources.map(source => `
+                                <a href="${source.url}" target="_blank" class="source-link">
+                                    <i class="fab fa-youtube" style="color: #ff0000;"></i>
+                                    <span>${source.title}</span>
+                                    <span class="timestamp">${source.timestamp}</span>
+                                </a>
+                            `).join('');
+                            sourcesDiv.style.display = 'block';
+                        }
+                    } else {
+                        contentDiv.innerHTML = `<p style="color: #ef4444;">오류가 발생했습니다: ${data.error}</p>`;
+                    }
+
+                } catch (error) {
+                    contentDiv.innerHTML = `<p style="color: #ef4444;">서버 연결에 실패했습니다.</p>`;
+                    console.error(error);
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-sparkles"></i> AI에게 물어보기';
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
