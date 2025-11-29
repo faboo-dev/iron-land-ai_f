@@ -565,24 +565,15 @@ function analyze_with_claude_enhanced($query, $all_places)
                 'Content-Type' => 'application/json',
             ),
             'body' => json_encode(array(
-                'query' => $query,
-                'history' => array()
+                'query' => $query
             )),
-            'timeout' => 30
+            'timeout' => 30 // 타임아웃 30초로 증가
         ));
 
         if (is_wp_error($response)) {
-            error_log('RAG API Error: ' . $response->get_error_message());
             return array(
-                'success' => true,
-                'main_content' => array(
-                    'content' => "죄송합니다. AI 서버와 연결할 수 없습니다. (Python Backend가 실행 중인지 확인해주세요)\n\n" . $response->get_error_message(),
-                    'source' => 'System Error'
-                ),
-                'our_places' => array(
-                    'places' => array(),
-                    'message' => ''
-                )
+                'success' => false,
+                'error' => 'WP Error: ' . $response->get_error_message()
             );
         }
 
