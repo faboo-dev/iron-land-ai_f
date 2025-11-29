@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Configuration
-DATA_DIR = "../data"
+DATA_DIR = "./data"
 PERSIST_DIRECTORY = "./chroma_db"
 
 def load_json_documents(data_dir):
