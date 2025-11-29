@@ -28,7 +28,7 @@ retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
 
 # Initialize LLM (Google Gemini Pro)
 llm = ChatGoogleGenerativeAI(
-    model="gemini-1.5-flash",
+    model="gemini-1.5-flash-latest",
     temperature=0.7,
     max_tokens=1024,
     max_retries=2,

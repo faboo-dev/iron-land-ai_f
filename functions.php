@@ -557,10 +557,10 @@ function create_claude_prompt($query, $db_results)
 function analyze_with_claude_enhanced($query, $all_places)
 {
     // Python Backend API URL (로컬 테스트용)
-    $api_url = 'http://localhost:8000/chat';
+    $python_api_url = 'https://iron-land-ai-f.onrender.com/chat';
 
     try {
-        $response = wp_remote_post($api_url, array(
+        $response = wp_remote_post($python_api_url, array(
             'headers' => array(
                 'Content-Type' => 'application/json',
             ),
