@@ -610,7 +610,7 @@ function analyze_with_claude_enhanced($query, $all_places)
         } else {
             return array(
                 'success' => false,
-                'error' => 'Invalid API Response'
+                'error' => 'Invalid API Response (No Answer): ' . print_r($data, true) . ' | Raw Body: ' . $body
             );
         }
 
