@@ -24,7 +24,7 @@ vectorstore = Chroma(
     collection_name="travel_knowledge_base"
 )
 
-retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
+retriever = vectorstore.as_retriever(search_kwargs={"k": 10})
 
 import google.generativeai as genai
 

@@ -68,13 +68,24 @@ def ingest_data():
         print("No documents found to ingest.")
         return
 
-    print(f"Found {len(docs)} documents. Creating embeddings with Gemini...")
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+
+    print(f"Found {len(docs)} documents. Splitting into chunks for better retrieval...")
+    
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=1000,
+        chunk_overlap=200,
+        separators=["\n\n", "\n", " ", ""]
+    )
+    split_docs = text_splitter.split_documents(docs)
+    
+    print(f"Created {len(split_docs)} chunks from {len(docs)} documents.")
     
     # Use Google Gemini Embeddings
     embeddings = GoogleGenerativeAIEmbeddings(model="models/text-embedding-004")
     
     vectorstore = Chroma.from_documents(
-        documents=docs,
+        documents=split_docs,
         embedding=embeddings,
         persist_directory=PERSIST_DIRECTORY,
         collection_name="travel_knowledge_base"
