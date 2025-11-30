@@ -51,7 +51,7 @@ async def startup_event():
 
 # RAG Prompt
 template = """당신은 '철산랜드(Iron Land)'의 AI 어시스턴트입니다.
-사용자의 질문에 대해 아래 제공된 [Context]를 바탕으로 친절하고 상세하게 한국어로 답변해주세요.
+사용자의 질문에 대해 아래 제공된 [Context]를 바탕으로 답변을 작성하세요.
 
 [Context]:
 {context}
@@ -61,16 +61,30 @@ template = """당신은 '철산랜드(Iron Land)'의 AI 어시스턴트입니다
 
 [Guidelines]:
 1. **반드시 한국어로 답변하세요.**
-2. 제공된 [Context]에 있는 내용을 최우선으로 사용하여 답변하세요.
-3. [Context]에 답변에 필요한 정보가 부족하다면, 당신의 일반적인 지식을 활용하여 답변하되, "철산랜드 기록에는 없지만, 일반적인 정보로는..."이라고 언급해주세요.
-4. 답변은 친절하고 전문적인 톤으로 작성하세요.
-5. 답변 끝에는 항상 도움이 되었기를 바라는 멘트를 추가하세요.
+2. 답변은 다음 두 부분으로 명확히 나누어 작성하세요.
+
+   **[🏰 철산랜드 기록]**
+   - 오직 제공된 [Context]의 내용만 사용하여 답변하세요.
+   - [Context]에 정보가 없다면 "철산랜드 기록에는 관련 정보가 없습니다."라고 명시하세요.
+   - 답변 중간중간에 (출처: 파일명)을 언급하여 신뢰도를 높이세요.
+
+   **[🤖 AI 크로스체크]**
+   - 당신의 일반적인 지식을 활용하여 [철산랜드 기록]의 내용을 보충하거나 검증하세요.
+   - [Context]의 'Source'에 있는 날짜 정보(예: 202507은 2025년 7월)를 확인하고, "이 기록은 2025년 7월 기준입니다. 현재 정보와 다를 수 있으니 확인이 필요합니다."와 같은 주의사항을 추가하세요.
+   - [철산랜드 기록]에 정보가 없었다면, 여기서 당신이 아는 정보를 친절하게 설명해주세요.
+
+3. 답변은 친절하고 전문적인 톤으로 작성하세요.
 """
 prompt = ChatPromptTemplate.from_template(template)
 
 # RAG Chain
 def format_docs(docs):
-    return "\n\n".join([d.page_content for d in docs])
+    formatted_docs = []
+    for d in docs:
+        source = d.metadata.get('source', 'Unknown')
+        content = d.page_content
+        formatted_docs.append(f"Source: {source}\nContent: {content}")
+    return "\n\n".join(formatted_docs)
 
 rag_chain = (
     {"context": retriever | format_docs, "question": RunnablePassthrough()}
