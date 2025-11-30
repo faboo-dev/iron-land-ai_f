@@ -567,7 +567,7 @@ function analyze_with_claude_enhanced($query, $all_places)
             'body' => json_encode(array(
                 'query' => $query
             )),
-            'timeout' => 60 // 타임아웃 60초로 증가 (Render Free Tier Cold Start 대비)
+            'timeout' => 120 // 타임아웃 120초로 증가 (데이터 처리량 증가 및 Cold Start 대비)
         ));
 
         if (is_wp_error($response)) {
@@ -2401,122 +2401,122 @@ function travel_maps_approval_page()
 
 
     ?>
-        <div class="wrap">
-            <h1>🗺️ 여행지 관리</h1>
+    <div class="wrap">
+        <h1>🗺️ 여행지 관리</h1>
 
-            <?php if (empty($pending_places)): ?>
-                    <div class="notice notice-info">
-                        <p>등록된 여행지가 없습니다.</p>
-                    </div>
-            <?php else: ?>
-                    <p><strong>총 <?php echo count($pending_places); ?>개의 여행지가 등록되어 있습니다.</strong></p>
-
-                    <table class="wp-list-table widefat fixed striped">
-                        <thead>
-                            <tr>
-                                <th style="width: 300px;">여행지 정보</th>
-                                <th style="width: 200px;">위치 정보</th>
-                                <th style="width: 150px;">등록일</th>
-                                <th style="width: 200px;">관리 액션</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($pending_places as $place):
-                                $lat = get_post_meta($place->ID, 'place_latitude', true);
-                                $lng = get_post_meta($place->ID, 'place_longitude', true);
-                                $address = get_post_meta($place->ID, 'place_address', true);
-                                $contact = get_post_meta($place->ID, 'place_contact', true);
-                                $website = get_post_meta($place->ID, 'place_website', true);
-                                $category = get_post_meta($place->ID, 'travel_category', true);
-                                $country = get_post_meta($place->ID, 'location_country', true);
-                                $region = get_post_meta($place->ID, 'location_region', true);
-
-                                $category_names = array(
-                                    'restaurant' => '음식점/카페',
-                                    'education' => '교육/문화 체험',
-                                    'city' => '도시 탐방',
-                                    'accommodation' => '숙박시설',
-                                    'activity' => '액티비티/모험',
-                                    'nature' => '자연/야외 체험',
-                                    'theme-park' => '테마파크/놀이시설',
-                                    'healing' => '휴양/힐링'
-                                );
-                                ?>
-                                    <tr>
-                                        <td>
-                                            <strong
-                                                style="color: #2271b1; font-size: 14px;"><?php echo esc_html($place->post_title); ?></strong>
-                                            <div style="margin-top: 5px; font-size: 12px; color: #666;">
-                                                📍 <?php echo esc_html($address); ?><br>
-                                                <?php if ($contact): ?>📞 <?php echo esc_html($contact); ?><br><?php endif; ?>
-                                                <?php if ($website): ?>🌐 <a href="<?php echo esc_url($website); ?>"
-                                                            target="_blank">웹사이트</a><br><?php endif; ?>
-                                                🎯 <?php echo $category_names[$category] ?? $category; ?>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div style="font-size: 12px;">
-                                                🌍 <?php echo ($country === '대한민국') ? '국내' : $country; ?><br>
-                                                📍 <?php echo esc_html($region); ?><br>
-                                                📊 <?php echo $lat; ?>, <?php echo $lng; ?>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div style="font-size: 12px; color: #666;">
-                                                <?php echo date('Y-m-d H:i', strtotime($place->post_date)); ?>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <form method="post" style="display: inline-block;">
-                                                <input type="hidden" name="place_id" value="<?php echo $place->ID; ?>">
-                                                <input type="hidden" name="action" value="reject">
-                                                <button type="submit" class="button button-secondary"
-                                                    onclick="return confirm('이 여행지를 삭제하시겠습니까? 되돌릴 수 없습니다.')"
-                                                    style="background: #dc3545; border-color: #dc3545; color: white;">
-                                                    ❌ 삭제
-                                                </button>
-                                            </form>
-                                            <div style="margin-top: 5px;">
-                                                <a href="https://www.google.com/maps?q=<?php echo $lat; ?>,<?php echo $lng; ?>" target="_blank"
-                                                    class="button button-small">
-                                                    🗺️ 지도 확인
-                                                </a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-            <?php endif; ?>
-
-            <div style="margin-top: 30px; padding: 15px; background: #f0f0f1; border-radius: 5px;">
-                <h3>📊 통계 정보</h3>
-                <?php
-                $total_places = wp_count_posts('travel_place');
-                $published = $total_places->publish;
-                $pending = $total_places->draft;
-                $rejected = $total_places->trash;
-                ?>
-                <p>
-                    ✅ <strong>등록된 여행지:</strong> <?php echo $published; ?>개<br>
-                    ❌ <strong>삭제된 여행지:</strong> <?php echo $rejected; ?>개
-                </p>
+        <?php if (empty($pending_places)): ?>
+            <div class="notice notice-info">
+                <p>등록된 여행지가 없습니다.</p>
             </div>
+        <?php else: ?>
+            <p><strong>총 <?php echo count($pending_places); ?>개의 여행지가 등록되어 있습니다.</strong></p>
 
-            <!-- 🔥 여기에 새로운 캐시 관리 div 추가 👇 -->
-            <div style="margin-top: 20px; padding: 15px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px;">
-                <h3>🔧 캐시 관리</h3>
-                <form method="post" style="display: inline;">
-                    <input type="hidden" name="clear_cache" value="1">
-                    <button type="submit" class="button button-secondary" onclick="return confirm('캐시를 모두 삭제하시겠습니까?')">
-                        🗑️ 전체 캐시 삭제
-                    </button>
-                </form>
-                <p><small>⚠️ 삭제된 장소가 프론트에서 계속 보인다면 이 버튼을 클릭하세요.</small></p>
-            </div>
+            <table class="wp-list-table widefat fixed striped">
+                <thead>
+                    <tr>
+                        <th style="width: 300px;">여행지 정보</th>
+                        <th style="width: 200px;">위치 정보</th>
+                        <th style="width: 150px;">등록일</th>
+                        <th style="width: 200px;">관리 액션</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($pending_places as $place):
+                        $lat = get_post_meta($place->ID, 'place_latitude', true);
+                        $lng = get_post_meta($place->ID, 'place_longitude', true);
+                        $address = get_post_meta($place->ID, 'place_address', true);
+                        $contact = get_post_meta($place->ID, 'place_contact', true);
+                        $website = get_post_meta($place->ID, 'place_website', true);
+                        $category = get_post_meta($place->ID, 'travel_category', true);
+                        $country = get_post_meta($place->ID, 'location_country', true);
+                        $region = get_post_meta($place->ID, 'location_region', true);
 
+                        $category_names = array(
+                            'restaurant' => '음식점/카페',
+                            'education' => '교육/문화 체험',
+                            'city' => '도시 탐방',
+                            'accommodation' => '숙박시설',
+                            'activity' => '액티비티/모험',
+                            'nature' => '자연/야외 체험',
+                            'theme-park' => '테마파크/놀이시설',
+                            'healing' => '휴양/힐링'
+                        );
+                        ?>
+                        <tr>
+                            <td>
+                                <strong
+                                    style="color: #2271b1; font-size: 14px;"><?php echo esc_html($place->post_title); ?></strong>
+                                <div style="margin-top: 5px; font-size: 12px; color: #666;">
+                                    📍 <?php echo esc_html($address); ?><br>
+                                    <?php if ($contact): ?>📞 <?php echo esc_html($contact); ?><br><?php endif; ?>
+                                    <?php if ($website): ?>🌐 <a href="<?php echo esc_url($website); ?>"
+                                            target="_blank">웹사이트</a><br><?php endif; ?>
+                                    🎯 <?php echo $category_names[$category] ?? $category; ?>
+                                </div>
+                            </td>
+                            <td>
+                                <div style="font-size: 12px;">
+                                    🌍 <?php echo ($country === '대한민국') ? '국내' : $country; ?><br>
+                                    📍 <?php echo esc_html($region); ?><br>
+                                    📊 <?php echo $lat; ?>, <?php echo $lng; ?>
+                                </div>
+                            </td>
+                            <td>
+                                <div style="font-size: 12px; color: #666;">
+                                    <?php echo date('Y-m-d H:i', strtotime($place->post_date)); ?>
+                                </div>
+                            </td>
+                            <td>
+                                <form method="post" style="display: inline-block;">
+                                    <input type="hidden" name="place_id" value="<?php echo $place->ID; ?>">
+                                    <input type="hidden" name="action" value="reject">
+                                    <button type="submit" class="button button-secondary"
+                                        onclick="return confirm('이 여행지를 삭제하시겠습니까? 되돌릴 수 없습니다.')"
+                                        style="background: #dc3545; border-color: #dc3545; color: white;">
+                                        ❌ 삭제
+                                    </button>
+                                </form>
+                                <div style="margin-top: 5px;">
+                                    <a href="https://www.google.com/maps?q=<?php echo $lat; ?>,<?php echo $lng; ?>" target="_blank"
+                                        class="button button-small">
+                                        🗺️ 지도 확인
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        <?php endif; ?>
+
+        <div style="margin-top: 30px; padding: 15px; background: #f0f0f1; border-radius: 5px;">
+            <h3>📊 통계 정보</h3>
+            <?php
+            $total_places = wp_count_posts('travel_place');
+            $published = $total_places->publish;
+            $pending = $total_places->draft;
+            $rejected = $total_places->trash;
+            ?>
+            <p>
+                ✅ <strong>등록된 여행지:</strong> <?php echo $published; ?>개<br>
+                ❌ <strong>삭제된 여행지:</strong> <?php echo $rejected; ?>개
+            </p>
         </div>
-        <?php
+
+        <!-- 🔥 여기에 새로운 캐시 관리 div 추가 👇 -->
+        <div style="margin-top: 20px; padding: 15px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px;">
+            <h3>🔧 캐시 관리</h3>
+            <form method="post" style="display: inline;">
+                <input type="hidden" name="clear_cache" value="1">
+                <button type="submit" class="button button-secondary" onclick="return confirm('캐시를 모두 삭제하시겠습니까?')">
+                    🗑️ 전체 캐시 삭제
+                </button>
+            </form>
+            <p><small>⚠️ 삭제된 장소가 프론트에서 계속 보인다면 이 버튼을 클릭하세요.</small></p>
+        </div>
+
+    </div>
+    <?php
 }
 
 // 승인/거부 이메일 발송

@@ -6,6 +6,7 @@ langchain-community<0.3.0
 langchain-core<0.3.0
 langchain-google-genai
 google-generativeai
+rank_bm25
 langchain-chroma
 pydantic
 requests

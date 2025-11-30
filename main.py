@@ -77,6 +77,52 @@ template = """당신은 '철산랜드(Iron Land)'의 AI 어시스턴트입니다
 """
 prompt = ChatPromptTemplate.from_template(template)
 
+# Load all documents for Keyword Search (Substring Match)
+print("Loading all documents for Keyword Search...")
+all_docs_data = vectorstore.get()
+all_contents = all_docs_data['documents']
+all_metadatas = all_docs_data['metadatas']
+
+from langchain_core.documents import Document
+cached_docs = []
+for i, content in enumerate(all_contents):
+    metadata = all_metadatas[i] if all_metadatas else {}
+    cached_docs.append(Document(page_content=content, metadata=metadata))
+print(f"Loaded {len(cached_docs)} documents for Keyword Search.")
+
+def retrieve_combined(query):
+    # 1. Keyword Search (Substring)
+    keyword_docs = []
+    # Simple heuristic: only do substring search if query is short enough to be a keyword
+    # or just always do it. Always do it for robustness.
+    for doc in cached_docs:
+        if query in doc.page_content:
+            keyword_docs.append(doc)
+    
+    # 2. Vector Search
+    vector_docs = retriever.invoke(query)
+    
+    # 3. Combine & Deduplicate
+    seen_content = set()
+    final_docs = []
+    
+    # Prioritize keyword matches
+    for doc in keyword_docs:
+        if doc.page_content not in seen_content:
+            final_docs.append(doc)
+            seen_content.add(doc.page_content)
+            
+    # Add vector matches
+    for doc in vector_docs:
+        if doc.page_content not in seen_content:
+            final_docs.append(doc)
+            seen_content.add(doc.page_content)
+    
+    # Limit to k=10
+    return final_docs[:10]
+
+from langchain_core.runnables import RunnableLambda
+
 # RAG Chain
 def format_docs(docs):
     formatted_docs = []
@@ -87,7 +133,7 @@ def format_docs(docs):
     return "\n\n".join(formatted_docs)
 
 rag_chain = (
-    {"context": retriever | format_docs, "question": RunnablePassthrough()}
+    {"context": RunnableLambda(retrieve_combined) | format_docs, "question": RunnablePassthrough()}
     | prompt
     | llm
     | StrOutputParser()

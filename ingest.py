@@ -3,6 +3,7 @@ import json
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -39,6 +40,8 @@ def load_json_documents(data_dir):
                                 "id": item.get('id', '')
                             }
                             documents.append(Document(page_content=content, metadata=metadata))
+                            if "썬마호핑" in content:
+                                print(f"✅ Found '썬마호핑' in item {item.get('id')} during loading.")
                             
                     elif isinstance(data, dict):
                         content = data.get('raw_content', '')
@@ -68,18 +71,23 @@ def ingest_data():
         print("No documents found to ingest.")
         return
 
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-
     print(f"Found {len(docs)} documents. Splitting into chunks for better retrieval...")
     
+    # Debug: Print first document length
+    if docs:
+        print(f"First doc length: {len(docs[0].page_content)}")
+        print(f"First doc content preview: {docs[0].page_content[:100]}...")
+
     text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1000,
-        chunk_overlap=200,
+        chunk_size=500, # Reduce chunk size to force splitting
+        chunk_overlap=100,
         separators=["\n\n", "\n", " ", ""]
     )
     split_docs = text_splitter.split_documents(docs)
     
     print(f"Created {len(split_docs)} chunks from {len(docs)} documents.")
+    if split_docs:
+        print(f"First chunk length: {len(split_docs[0].page_content)}")
     
     # Use Google Gemini Embeddings
     embeddings = GoogleGenerativeAIEmbeddings(model="models/text-embedding-004")
@@ -90,6 +98,8 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
         persist_directory=PERSIST_DIRECTORY,
         collection_name="travel_knowledge_base"
     )
+    
+    print(f"Successfully ingested {len(split_docs)} chunks into {PERSIST_DIRECTORY}")
     
     print(f"Successfully ingested {len(docs)} documents into {PERSIST_DIRECTORY}")
 
