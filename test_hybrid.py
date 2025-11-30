@@ -80,4 +80,6 @@ def test_hybrid(query):
         print(f"Error during retrieval: {e}")
 
 if __name__ == "__main__":
-    test_hybrid("썬마호핑")
+    import sys
+    query = sys.argv[1] if len(sys.argv) > 1 else "썬마호핑"
+    test_hybrid(query)
