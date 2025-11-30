@@ -6,7 +6,7 @@ langchain-community
 langchain-google-genai
 google-generativeai
 langchain-chroma
-langchain-communitydantic
+pydantic
 requests
 importlib-metadata>=6.0.0
 zipp>=3.0.0
