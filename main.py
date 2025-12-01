@@ -5,8 +5,8 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
 from langchain_community.vectorstores import Chroma
-from langchain.schema import Document
-from langchain.prompts import PromptTemplate
+from langchain_core.documents import Document
+from langchain_core.prompts import PromptTemplate
 from dotenv import load_dotenv
 
 # 환경변수 로드
@@ -15,9 +15,7 @@ load_dotenv()
 # FastAPI 앱
 app = FastAPI(title="Iron Land Travel AI")
 
-# ========================================
 # Vector Store & LLM 초기화
-# ========================================
 embeddings = GoogleGenerativeAIEmbeddings(model="models/text-embedding-004")
 vectorstore = Chroma(
     persist_directory="./chroma_db",
@@ -31,10 +29,7 @@ llm = ChatGoogleGenerativeAI(
     max_tokens=2048
 )
 
-
-# ========================================
 # 키워드 정규화
-# ========================================
 KEYWORD_NORMALIZATION = {
     "썬마호핑": ["썬마호핑", "선마호핑", "썬마", "선마", "써마", "섬마"],
     "해적호핑": ["해적호핑", "해적", "해저핑"],
@@ -58,22 +53,15 @@ def normalize_keywords(text: str) -> List[str]:
     basic_keywords = [w for w in basic_keywords if w not in stopwords and len(w) > 1]
     
     normalized.extend(basic_keywords)
-    
     return list(set(normalized))
 
-
-# ========================================
-# 하이브리드 검색
-# ========================================
 def hybrid_search(query: str, k: int = 30) -> List[Document]:
     """하이브리드 검색"""
     keywords = normalize_keywords(query)
     print(f"🔍 Keywords: {keywords}")
     
-    # Vector 검색
     vector_results = vectorstore.similarity_search(query, k=k)
     
-    # 키워드 매칭
     keyword_results = []
     all_docs = vectorstore.get()
     
@@ -86,7 +74,6 @@ def hybrid_search(query: str, k: int = 30) -> List[Document]:
                     metadata=metadata
                 ))
     
-    # 결과 병합
     combined = []
     seen_ids = set()
     
@@ -99,10 +86,6 @@ def hybrid_search(query: str, k: int = 30) -> List[Document]:
     
     return combined[:20]
 
-
-# ========================================
-# Prompt 정의
-# ========================================
 PROMPT_TEMPLATE = """당신은 철산랜드 여행 정보 AI입니다.
 
 [절대 규칙]
@@ -124,16 +107,10 @@ PROMPT_TEMPLATE = """당신은 철산랜드 여행 정보 AI입니다.
 (일반적인 여행 정보)
 """
 
-
-# ========================================
-# 답변 생성
-# ========================================
 def generate_answer(query: str) -> Dict:
     """답변 생성"""
-    # 검색
     retrieved_docs = hybrid_search(query, k=30)
     
-    # Context 구성
     context_parts = []
     for i, doc in enumerate(retrieved_docs[:10], 1):
         title = doc.metadata.get('title', '영상')
@@ -146,15 +123,12 @@ def generate_answer(query: str) -> Dict:
     
     context = "\n".join(context_parts)
     
-    # Prompt 생성
     prompt = PromptTemplate(
         input_variables=["context", "question"],
         template=PROMPT_TEMPLATE
     )
     
     final_prompt = prompt.format(context=context, question=query)
-    
-    # LLM 호출
     response = llm.invoke(final_prompt)
     
     return {
@@ -169,10 +143,6 @@ def generate_answer(query: str) -> Dict:
         ]
     }
 
-
-# ========================================
-# API
-# ========================================
 class ChatRequest(BaseModel):
     query: str
 
@@ -192,7 +162,6 @@ async def chat(request: ChatRequest):
 @app.get("/")
 async def root():
     return {"message": "Iron Land Travel AI is running!"}
-
 
 if __name__ == "__main__":
     import uvicorn
