@@ -12,7 +12,7 @@ from langchain.schema import Document
 # ========================================
 # 환경 변수 설정
 # ========================================
-os.environ["GOOGLE_API_KEY"] = "YOUR_GOOGLE_API_KEY"
+os.environ["GOOGLE_API_KEY"] = "AIzaSyDW2umdbsDWSMkIeX7VsdHoRfrcXp_qsYE"
 
 # FastAPI 앱
 app = FastAPI(title="Iron Land Travel AI")
