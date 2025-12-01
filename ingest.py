@@ -1,21 +1,16 @@
 import os
 import json
-from typing import List, Dict
+from typing import List
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_community.vectorstores import Chroma
-from langchain.schema import Document
+from langchain_core.documents import Document
 from dotenv import load_dotenv
 
 # 환경변수 로드
 load_dotenv()
 
-# ========================================
-# 1. JSON 문서 로드
-# ========================================
 def load_json_documents(data_dir: str = "./data") -> List[Document]:
-    """
-    JSON 파일에서 문서 로드
-    """
+    """JSON 파일에서 문서 로드"""
     documents = []
     
     for filename in os.listdir(data_dir):
@@ -49,19 +44,10 @@ def load_json_documents(data_dir: str = "./data") -> List[Document]:
     print(f"✅ Loaded {len(documents)} documents")
     return documents
 
-
-# ========================================
-# 2. 스마트 청킹
-# ========================================
-def smart_chunking(documents: List[Document], 
-                   window_size: int = 3,
-                   max_chunk_size: int = 1200) -> List[Document]:
-    """
-    연관된 타임스탬프의 청크를 병합
-    """
+def smart_chunking(documents: List[Document], window_size: int = 3, max_chunk_size: int = 1200) -> List[Document]:
+    """연관된 타임스탬프의 청크를 병합"""
     merged_docs = []
     
-    # 같은 영상끼리 그룹화
     video_groups = {}
     for doc in documents:
         video_id = doc.metadata.get("original_url")
@@ -69,7 +55,6 @@ def smart_chunking(documents: List[Document],
             video_groups[video_id] = []
         video_groups[video_id].append(doc)
     
-    # 각 영상별로 처리
     for video_id, docs in video_groups.items():
         docs.sort(key=lambda x: x.metadata.get("timestamp_seconds", 0))
         
@@ -107,11 +92,8 @@ def smart_chunking(documents: List[Document],
     print(f"✅ Created {len(merged_docs)} merged chunks")
     return merged_docs
 
-
 def extract_keywords(text: str) -> List[str]:
-    """
-    키워드 추출
-    """
+    """키워드 추출"""
     hopping_keywords = [
         "썬마호핑", "선마호핑", "썬마", "선마",
         "해적호핑", "해적", 
@@ -137,23 +119,14 @@ def extract_keywords(text: str) -> List[str]:
     
     return list(set(found_keywords))
 
-
-# ========================================
-# 3. ChromaDB 생성
-# ========================================
-def create_vectorstore(documents: List[Document], 
-                       persist_directory: str = "./chroma_db") -> Chroma:
-    """
-    ChromaDB 생성
-    """
+def create_vectorstore(documents: List[Document], persist_directory: str = "./chroma_db") -> Chroma:
+    """ChromaDB 생성"""
     if os.path.exists(persist_directory):
         import shutil
         shutil.rmtree(persist_directory)
         print(f"🗑️  Deleted old database")
     
-    embeddings = GoogleGenerativeAIEmbeddings(
-        model="models/text-embedding-004"
-    )
+    embeddings = GoogleGenerativeAIEmbeddings(model="models/text-embedding-004")
     
     print("🔄 Creating vector store...")
     vectorstore = Chroma.from_documents(
@@ -166,20 +139,11 @@ def create_vectorstore(documents: List[Document],
     print(f"✅ Vector store created with {len(documents)} documents")
     return vectorstore
 
-
-# ========================================
-# MAIN
-# ========================================
 if __name__ == "__main__":
     print("🚀 Starting data ingestion...\n")
     
-    # 1. JSON 로드
     documents = load_json_documents("./data")
-    
-    # 2. 스마트 청킹
     merged_documents = smart_chunking(documents, window_size=3, max_chunk_size=1200)
-    
-    # 3. Vector Store 생성
     vectorstore = create_vectorstore(merged_documents)
     
     print("\n✅ Ingestion completed!")
