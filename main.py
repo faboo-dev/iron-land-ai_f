@@ -15,19 +15,53 @@ load_dotenv()
 # FastAPI 앱
 app = FastAPI(title="Iron Land Travel AI")
 
-# Vector Store & LLM 초기화
-embeddings = GoogleGenerativeAIEmbeddings(model="models/text-embedding-004")
-vectorstore = Chroma(
-    persist_directory="./chroma_db",
-    embedding_function=embeddings,
-    collection_name="travel_knowledge_base"
-)
+# Vector Store & LLM 초기화 (지연 로딩)
+embeddings = None
+vectorstore = None
+llm = None
 
-llm = ChatGoogleGenerativeAI(
-    model="gemini-2.0-flash-exp",
-    temperature=0.3,
-    max_tokens=2048
-)
+def init_services():
+    """서비스 초기화 (첫 요청 시)"""
+    global embeddings, vectorstore, llm
+    
+    if embeddings is None:
+        print("🔄 Initializing embeddings...")
+        embeddings = GoogleGenerativeAIEmbeddings(model="models/text-embedding-004")
+    
+    if llm is None:
+        print("🔄 Initializing LLM...")
+        llm = ChatGoogleGenerativeAI(
+            model="gemini-2.0-flash-exp",
+            temperature=0.3,
+            max_tokens=2048
+        )
+    
+    if vectorstore is None:
+        print("🔄 Initializing vector store...")
+        persist_dir = "./chroma_db"
+        
+        if not os.path.exists(persist_dir):
+            print(f"⚠️  Warning: {persist_dir} not found.")
+            print("📝 Creating empty vector store...")
+            
+            dummy_docs = [
+                Document(
+                    page_content="데이터베이스를 초기화해주세요. ingest.py를 먼저 실행하세요.",
+                    metadata={"id": "system_init", "title": "System"}
+                )
+            ]
+            vectorstore = Chroma.from_documents(
+                documents=dummy_docs,
+                embedding=embeddings,
+                collection_name="travel_knowledge_base"
+            )
+        else:
+            vectorstore = Chroma(
+                persist_directory=persist_dir,
+                embedding_function=embeddings,
+                collection_name="travel_knowledge_base"
+            )
+            print("✅ Vector store loaded")
 
 # 키워드 정규화
 KEYWORD_NORMALIZATION = {
@@ -57,6 +91,8 @@ def normalize_keywords(text: str) -> List[str]:
 
 def hybrid_search(query: str, k: int = 30) -> List[Document]:
     """하이브리드 검색"""
+    init_services()
+    
     keywords = normalize_keywords(query)
     print(f"🔍 Keywords: {keywords}")
     
@@ -109,6 +145,8 @@ PROMPT_TEMPLATE = """당신은 철산랜드 여행 정보 AI입니다.
 
 def generate_answer(query: str) -> Dict:
     """답변 생성"""
+    init_services()
+    
     retrieved_docs = hybrid_search(query, k=30)
     
     context_parts = []
@@ -157,12 +195,30 @@ async def chat(request: ChatRequest):
         result = generate_answer(request.query)
         return ChatResponse(**result)
     except Exception as e:
+        print(f"❌ Error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/")
 async def root():
-    return {"message": "Iron Land Travel AI is running!"}
+    """헬스체크"""
+    return {
+        "message": "Iron Land Travel AI is running!",
+        "status": "healthy"
+    }
+
+@app.get("/health")
+async def health():
+    """상세 헬스체크"""
+    init_services()
+    
+    return {
+        "status": "healthy",
+        "embeddings": "initialized" if embeddings else "not initialized",
+        "llm": "initialized" if llm else "not initialized",
+        "vectorstore": "initialized" if vectorstore else "not initialized"
+    }
 
 if __name__ == "__main__":
     import uvicorn
+    print("🚀 Starting Iron Land Travel AI...")
     uvicorn.run(app, host="0.0.0.0", port=8000)
